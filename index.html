@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lost Heirloom</title>
+    <style>
+        body { 
+            font-family: 'Arial', sans-serif; 
+            background: linear-gradient(135deg, #2c3e50, #4ca1af); 
+            color: #ecf0f1; 
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+        #game-container { 
+            padding: 20px; 
+            width: 400px; 
+            background: rgba(52, 73, 94, 0.9); 
+            border-radius: 15px; 
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.7); 
+            overflow: hidden; 
+            transition: transform 0.3s ease; 
+        }
+        #game-container:hover { 
+            transform: scale(1.02); 
+        }
+        #story { 
+            margin-bottom: 20px; 
+            transition: opacity 0.5s ease; 
+            opacity: 0; 
+        }
+        #inventory { 
+            margin: 20px 0; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            background: rgba(41, 128, 185, 0.8); 
+            border-radius: 5px; 
+            animation: fadeIn 0.5s forwards; 
+        }
+        #input-area { 
+            display: flex; 
+            justify-content: space-between; 
+        }
+        #user-input { 
+            flex: 1; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 5px; 
+            background: #ecf0f1; 
+            color: #2c3e50; 
+            transition: box-shadow 0.3s ease; 
+        }
+        #user-input:focus { 
+            outline: none; 
+            box-shadow: 0 0 10px rgba(0, 150, 136, 0.5); 
+        }
+        #send-btn { 
+            padding: 10px; 
+            border-radius: 5px; 
+            background: linear-gradient(135deg, #27ae60, #2ecc71); 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            transition: background 0.3s ease, transform 0.3s ease; 
+            margin-left: 10px; 
+        }
+        #send-btn:hover { 
+            background: linear-gradient(135deg, #2ecc71, #27ae60); 
+            transform: translateY(-2px); 
+        }
+        #clue-area { 
+            margin-top: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+        }
+        .clue-button { 
+            padding: 10px; 
+            background: linear-gradient(135deg, #e74c3c, #c0392b); 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            transition: transform 0.3s ease; 
+        }
+        .clue-button:hover { 
+            transform: scale(1.05); 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; } 
+            to { opacity: 1; } 
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>The Lost Heirloom</h1>
+        <div id="story"></div>
+        <div id="inventory">Clues: <span id="clue-list"></span></div>
+        <div id="input-area">
+            <input type="text" id="user-input" placeholder="Type your command...">
+            <button id="send-btn">Send</button>
+        </div>
+        <div id="clue-area"></div>
+    </div>
+
+    <script>
+        const storyElement = document.getElementById('story');
+        const inventoryElement = document.getElementById('inventory');
+        const clueList = document.getElementById('clue-list');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const clueArea = document.getElementById('clue-area');
+
+        const gameState = {
+            inventory: [],
+            clues: [],
+            currentLocation: 'living room',
+            story: {
+                'living room': {
+                    text: "You're in the living room. A family portrait hangs on the wall. There's a door to the kitchen.",
+                    options: [
+                        { command: 'go to kitchen', location: 'kitchen' },
+                        { command: 'inspect portrait', clue: 'family portrait' }
+                    ]
+                },
+                'kitchen': {
+                    text: "You're in the kitchen. The smell of something burnt fills the air. You see a note on the table.",
+                    options: [
+                        { command: 'go to living room', location: 'living room' },
+                        { command: 'read note', clue: 'note on table' }
+                    ]
+                }
+            }
+        };
+
+        function updateStory() {
+            const location = gameState.story[gameState.currentLocation];
+            storyElement.innerHTML = location.text;
+            storyElement.style.opacity = 1; // Fade in
+            displayOptions(location.options);
+        }
+
+        function displayOptions(options) {
+            clueArea.innerHTML = '';
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'clue-button';
+                button.innerText = option.command;
+                button.onclick = () => handleCommand(option);
+                clueArea.appendChild(button);
+            });
+        }
+
+        function handleCommand(option) {
+            if (option.location) {
+                gameState.currentLocation = option.location;
+                updateStory();
+            }
+            if (option.clue) {
+                addClue(option.clue);
+            }
+        }
+
+        function addClue(clue) {
+            if (!gameState.clues.includes(clue)) {
+                gameState.clues.push(clue);
+                clueList.innerHTML = gameState.clues.join(', ');
+            }
+            alert(`You found a clue: ${clue}`);
+        }
+
+        sendBtn.addEventListener('click', () => {
+            const userMessage = userInput.value.trim().toLowerCase();
+            userInput.value = '';
+            const foundOption = gameState.story[gameState.currentLocation].options.find(option => option.command === userMessage);
+            if (foundOption) {
+                handleCommand(foundOption);
+            } else {
+                alert("I didn't understand that command.");
+            }
+        });
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendBtn.click();
+            }
+        });
+
+        updateStory(); // Start the game
+    </script>
+</body>
+</html>
